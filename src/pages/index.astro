@@ -94,11 +94,18 @@ const wordCountOptions = [10, 25, 50];
 			// jamais utilisé comme source de vérité, seule la variable `typed` compte.
 
 			function renderText() {
+				// Un vrai espace (pas &nbsp;) : chaque caractère est déjà isolé dans
+				// son propre <span>, donc il n'y a jamais deux espaces adjacents à
+				// fusionner — un espace normal ne pose aucun problème de rendu, et
+				// contrairement à &nbsp; (espace *insécable*), il laisse le
+				// navigateur retourner à la ligne entre les mots. Avec &nbsp;, tout
+				// le texte formait une seule ligne insécable qui débordait de son
+				// cadre au lieu de passer à la ligne.
 				const diff = diffChars(target, typed);
 				textDisplay.innerHTML = diff
 					.map((entry, index) => {
 						const cursor = index === typed.length ? " cursor" : "";
-						const char = entry.char === " " ? "&nbsp;" : entry.char;
+						const char = entry.char === " " ? " " : entry.char;
 						return `<span class="${entry.status}${cursor}">${char}</span>`;
 					})
 					.join("");
@@ -285,6 +292,7 @@ const wordCountOptions = [10, 25, 50];
 				font-size: 1.4rem;
 				line-height: 2.1rem;
 				letter-spacing: 0.02em;
+				text-align: center;
 				color: var(--muted);
 				background: rgba(255, 255, 255, 0.02);
 				border-radius: 10px;
@@ -293,21 +301,43 @@ const wordCountOptions = [10, 25, 50];
 				user-select: none;
 			}
 
-			.text-display span.pending {
+			/*
+			 * :global() est indispensable ici : Astro ne "scope" (préfixe avec
+			 * data-astro-cid-...) que les éléments présents dans le template au
+			 * moment du build. Les <span> ci-dessous sont injectés dynamiquement
+			 * en JS via `textDisplay.innerHTML = ...` (voir le <script> plus haut),
+			 * donc ils n'ont jamais cet attribut — sans :global(), ces règles ne
+			 * matchaient tout simplement jamais et le texte restait entièrement
+			 * gris quoi qu'on tape, sans aucun retour visuel correct/incorrect.
+			 */
+			.text-display :global(span.pending) {
 				color: var(--muted);
 			}
 
-			.text-display span.correct {
+			.text-display :global(span.correct) {
 				color: var(--correct);
 			}
 
-			.text-display span.incorrect {
+			.text-display :global(span.incorrect) {
 				color: var(--incorrect);
 				text-decoration: underline;
+				background: rgba(255, 92, 92, 0.15);
+				border-radius: 3px;
 			}
 
-			.text-display span.cursor {
+			.text-display :global(span.cursor) {
 				border-left: 2px solid var(--accent);
+				animation: blink-caret 1s step-end infinite;
+			}
+
+			@keyframes blink-caret {
+				0%,
+				100% {
+					border-left-color: var(--accent);
+				}
+				50% {
+					border-left-color: transparent;
+				}
 			}
 
 			.sr-input {
