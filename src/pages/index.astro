@@ -1,0 +1,362 @@
+---
+const wordCountOptions = [10, 25, 50];
+---
+
+<html lang="fr">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<title>Typing Speedtest</title>
+		<meta
+			name="description"
+			content="Test de vitesse de frappe minimaliste — WPM et précision, en Astro + JS vanilla."
+		/>
+	</head>
+	<body>
+		<main>
+			<h1>Typing Speedtest</h1>
+
+			<div class="controls" id="word-count-controls">
+				{
+					wordCountOptions.map((count, index) => (
+						<button
+							type="button"
+							class="count-btn"
+							class:list={[{ active: index === 1 }]}
+							data-count={count}
+						>
+							{count} mots
+						</button>
+					))
+				}
+			</div>
+
+			<div class="stats-bar">
+				<span>WPM <strong id="wpm">0</strong></span>
+				<span>Précision <strong id="accuracy">100</strong>%</span>
+				<span>Temps <strong id="elapsed">0.0</strong>s</span>
+			</div>
+
+			<div id="text-display" class="text-display" tabindex="0" aria-label="Texte à taper"></div>
+
+			<input
+				id="typing-input"
+				class="sr-input"
+				autocomplete="off"
+				autocorrect="off"
+				autocapitalize="off"
+				spellcheck="false"
+				aria-hidden="true"
+			/>
+
+			<p class="hint">Clique sur le texte puis tape pour démarrer. Échap pour recommencer.</p>
+
+			<div id="result" class="result hidden">
+				<p>
+					Terminé ! <strong id="final-wpm"></strong> WPM, <strong id="final-accuracy"></strong>% de
+					précision.
+				</p>
+				<button type="button" id="restart">Recommencer</button>
+			</div>
+		</main>
+
+		<script>
+			import { buildTargetText } from "../lib/words.js";
+			import { computeStats, diffChars, isComplete } from "../lib/typing.js";
+
+			const textDisplay = document.getElementById("text-display");
+			const input = document.getElementById("typing-input");
+			const wpmEl = document.getElementById("wpm");
+			const accuracyEl = document.getElementById("accuracy");
+			const elapsedEl = document.getElementById("elapsed");
+			const resultEl = document.getElementById("result");
+			const finalWpmEl = document.getElementById("final-wpm");
+			const finalAccuracyEl = document.getElementById("final-accuracy");
+			const restartBtn = document.getElementById("restart");
+			const countButtons = document.querySelectorAll(".count-btn");
+
+			let wordCount = 25;
+			let target = "";
+			let typed = "";
+			let startTime = null;
+			let finished = false;
+			let tickHandle = null;
+
+			// Le texte tapé est suivi ici, dans une variable JS, plutôt que lu depuis
+			// `input.value`. Avec un `<input>` positionné hors écran (nécessaire pour
+			// rester invisible tout en gardant le focus clavier), Chromium peut
+			// réinitialiser `selectionStart` à 0 sur certains caractères (l'espace en
+			// particulier) en gérant son défilement interne — le texte tapé se
+			// retrouvait alors inséré en tête du champ plutôt qu'à la fin, ce qui
+			// mélangeait complètement l'ordre des caractères capturés. `keydown` +
+			// `preventDefault()` évite ce problème : le DOM natif du champ n'est
+			// jamais utilisé comme source de vérité, seule la variable `typed` compte.
+
+			function renderText() {
+				const diff = diffChars(target, typed);
+				textDisplay.innerHTML = diff
+					.map((entry, index) => {
+						const cursor = index === typed.length ? " cursor" : "";
+						const char = entry.char === " " ? "&nbsp;" : entry.char;
+						return `<span class="${entry.status}${cursor}">${char}</span>`;
+					})
+					.join("");
+			}
+
+			function updateStats() {
+				const elapsedSeconds = startTime ? (performance.now() - startTime) / 1000 : 0;
+				const stats = computeStats(target, typed, elapsedSeconds);
+				wpmEl.textContent = String(stats.wpm);
+				accuracyEl.textContent = String(stats.accuracy);
+				elapsedEl.textContent = elapsedSeconds.toFixed(1);
+				return stats;
+			}
+
+			function stopTimer() {
+				if (tickHandle !== null) {
+					clearInterval(tickHandle);
+					tickHandle = null;
+				}
+			}
+
+			function finishTest() {
+				finished = true;
+				stopTimer();
+				const stats = updateStats();
+				finalWpmEl.textContent = String(stats.wpm);
+				finalAccuracyEl.textContent = String(stats.accuracy);
+				resultEl.classList.remove("hidden");
+				input.blur();
+			}
+
+			function resetTest() {
+				target = buildTargetText(wordCount);
+				typed = "";
+				startTime = null;
+				finished = false;
+				stopTimer();
+				input.value = "";
+				resultEl.classList.add("hidden");
+				renderText();
+				updateStats();
+				input.focus();
+			}
+
+			function onTypedChange() {
+				if (startTime === null) {
+					startTime = performance.now();
+					tickHandle = setInterval(updateStats, 100);
+				}
+
+				renderText();
+				updateStats();
+
+				if (isComplete(target, typed)) {
+					finishTest();
+				}
+			}
+
+			textDisplay.addEventListener("click", () => input.focus());
+
+			input.addEventListener("keydown", (event) => {
+				if (event.key === "Escape") {
+					resetTest();
+					return;
+				}
+
+				if (finished) return;
+				if (event.ctrlKey || event.metaKey || event.altKey) return;
+
+				if (event.key === "Backspace") {
+					event.preventDefault();
+					if (typed.length > 0) {
+						typed = typed.slice(0, -1);
+						onTypedChange();
+					}
+					return;
+				}
+
+				// Un seul caractère imprimable (lettre, chiffre, espace, ponctuation...).
+				// Exclut les touches spéciales ("Shift", "Tab", "ArrowLeft"...) dont
+				// `event.key` fait plus d'un caractère.
+				if (event.key.length === 1) {
+					event.preventDefault();
+					typed += event.key;
+					onTypedChange();
+				}
+			});
+
+			restartBtn.addEventListener("click", resetTest);
+			countButtons.forEach((button) => {
+				button.addEventListener("click", () => {
+					countButtons.forEach((b) => b.classList.remove("active"));
+					button.classList.add("active");
+					wordCount = Number(button.dataset.count);
+					resetTest();
+				});
+			});
+
+			resetTest();
+		</script>
+
+		<style>
+			:root {
+				color-scheme: dark;
+				--bg: #12141a;
+				--surface: #1b1e27;
+				--text: #e7e9ee;
+				--muted: #6b7280;
+				--accent: #4f8cff;
+				--correct: #35d07f;
+				--incorrect: #ff5c5c;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background: var(--bg);
+				color: var(--text);
+				font-family:
+					system-ui,
+					-apple-system,
+					"Segoe UI",
+					sans-serif;
+			}
+
+			main {
+				width: min(720px, 92vw);
+				padding: 2.5rem;
+				background: var(--surface);
+				border-radius: 16px;
+				box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+			}
+
+			h1 {
+				margin: 0 0 1.5rem;
+				font-size: 1.75rem;
+				text-align: center;
+			}
+
+			.controls {
+				display: flex;
+				gap: 0.5rem;
+				justify-content: center;
+				margin-bottom: 1.5rem;
+			}
+
+			.count-btn {
+				padding: 0.4rem 0.9rem;
+				border-radius: 999px;
+				border: 1px solid #333;
+				background: transparent;
+				color: var(--muted);
+				cursor: pointer;
+				font-size: 0.9rem;
+			}
+
+			.count-btn.active {
+				border-color: var(--accent);
+				color: var(--accent);
+			}
+
+			.stats-bar {
+				display: flex;
+				justify-content: center;
+				gap: 2rem;
+				margin-bottom: 1.5rem;
+				color: var(--muted);
+				font-size: 0.95rem;
+			}
+
+			.stats-bar strong {
+				color: var(--text);
+				font-size: 1.1rem;
+			}
+
+			.text-display {
+				font-size: 1.4rem;
+				line-height: 2.1rem;
+				letter-spacing: 0.02em;
+				color: var(--muted);
+				background: rgba(255, 255, 255, 0.02);
+				border-radius: 10px;
+				padding: 1.25rem 1.5rem;
+				cursor: text;
+				user-select: none;
+			}
+
+			.text-display span.pending {
+				color: var(--muted);
+			}
+
+			.text-display span.correct {
+				color: var(--correct);
+			}
+
+			.text-display span.incorrect {
+				color: var(--incorrect);
+				text-decoration: underline;
+			}
+
+			.text-display span.cursor {
+				border-left: 2px solid var(--accent);
+			}
+
+			.sr-input {
+				/*
+				 * Champ de saisie invisible mais qui capte le clavier. Volontairement
+				 * PAS réduit à 1x1px : dans une boîte aussi petite, Chromium doit
+				 * faire défiler le contenu du champ à chaque caractère pour garder
+				 * le curseur "visible", et ce défilement interne peut réinitialiser
+				 * `selectionStart` à 0 sur certains caractères (l'espace en
+				 * particulier) — le texte tapé se retrouve alors inséré au début du
+				 * champ au lieu d'être ajouté à la fin, et la valeur capturée ne
+				 * correspond plus à ce qui a été tapé. On garde donc une largeur
+				 * normale, positionnée hors écran.
+				 */
+				position: absolute;
+				left: -9999px;
+				top: 0;
+				width: 20em;
+				height: 1.5em;
+				opacity: 0;
+				pointer-events: none;
+			}
+
+			.hint {
+				text-align: center;
+				color: var(--muted);
+				font-size: 0.85rem;
+				margin-top: 0.75rem;
+			}
+
+			.result {
+				margin-top: 1.5rem;
+				text-align: center;
+			}
+
+			.result.hidden {
+				display: none;
+			}
+
+			.result button {
+				margin-top: 0.5rem;
+				padding: 0.5rem 1.2rem;
+				border-radius: 8px;
+				border: none;
+				background: var(--accent);
+				color: white;
+				cursor: pointer;
+				font-size: 0.95rem;
+			}
+		</style>
+	</body>
+</html>
