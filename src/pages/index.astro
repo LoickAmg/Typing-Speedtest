@@ -17,28 +17,36 @@ const wordCountOptions = [10, 25, 50];
 		<main>
 			<h1>Typing Speedtest</h1>
 
-			<div class="controls" id="word-count-controls">
+			<div class="controls" id="word-count-controls" role="group" aria-label="Nombre de mots">
 				{
 					wordCountOptions.map((count, index) => (
 						<button
 							type="button"
 							class="count-btn"
 							class:list={[{ active: index === 1 }]}
-							data-count={count}
-						>
-							{count} mots
+data-count={count}
+								aria-pressed={index === 1}
+							>
+								{count} mots
 						</button>
 					))
 				}
 			</div>
 
-			<div class="stats-bar">
+			<div class="stats-bar" aria-live="polite" aria-atomic="true">
 				<span>WPM <strong id="wpm">0</strong></span>
 				<span>Précision <strong id="accuracy">100</strong>%</span>
 				<span>Temps <strong id="elapsed">0.0</strong>s</span>
 			</div>
 
-			<div id="text-display" class="text-display" tabindex="0" aria-label="Texte à taper"></div>
+			<div
+					id="text-display"
+					class="text-display"
+					tabindex="0"
+					role="button"
+					aria-label="Zone de texte à taper. Appuyez sur Entrée pour commencer."
+				>
+				</div>
 
 			<input
 				id="typing-input"
@@ -47,12 +55,14 @@ const wordCountOptions = [10, 25, 50];
 				autocorrect="off"
 				autocapitalize="off"
 				spellcheck="false"
-				aria-hidden="true"
+									aria-label="Votre saisie"
+					aria-describedby="typing-hint"
+
 			/>
 
-			<p class="hint">Clique sur le texte puis tape pour démarrer. Échap pour recommencer.</p>
+			<p class="hint" id="typing-hint">Clique sur le texte puis tape pour démarrer. Échap pour recommencer.</p>
 
-			<div id="result" class="result hidden">
+			<div id="result" class="result hidden" role="status" aria-live="polite">
 				<p>
 					Terminé ! <strong id="final-wpm"></strong> WPM, <strong id="final-accuracy"></strong>% de
 					précision.
@@ -164,7 +174,13 @@ const wordCountOptions = [10, 25, 50];
 				}
 			}
 
-			textDisplay.addEventListener("click", () => input.focus());
+				textDisplay.addEventListener("click", () => input.focus());
+				textDisplay.addEventListener("keydown", (event) => {
+					if (event.key === "Enter" || event.key === " ") {
+						event.preventDefault();
+						input.focus();
+					}
+				});
 
 			input.addEventListener("keydown", (event) => {
 				if (event.key === "Escape") {
@@ -199,6 +215,7 @@ const wordCountOptions = [10, 25, 50];
 				button.addEventListener("click", () => {
 					countButtons.forEach((b) => b.classList.remove("active"));
 					button.classList.add("active");
+					countButtons.forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
 					wordCount = Number(button.dataset.count);
 					resetTest();
 				});
