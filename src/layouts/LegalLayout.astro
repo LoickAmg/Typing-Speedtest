@@ -1,0 +1,115 @@
+---
+import "@fontsource/ibm-plex-mono/400.css";
+import "@fontsource/ibm-plex-mono/600.css";
+import Footer from "../components/Footer.astro";
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="fr">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="robots" content="noindex" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<title>{title} — Typing Speedtest</title>
+	</head>
+	<body>
+		<main class="legal-wrap">
+			<p class="legal-brand"><a href="/">&larr; Retour au test</a></p>
+			<div class="legal-card">
+				<slot />
+			</div>
+		</main>
+		<Footer />
+
+		<style>
+			:root {
+				color-scheme: dark;
+				--bg: #12141a;
+				--surface: #1b1e27;
+				--text: #e7e9ee;
+				--muted: #99a0b0;
+				--accent: #5b8fff;
+				--rule: #2a2f3c;
+				--font-text: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo,
+					Consolas, monospace;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				background: var(--bg);
+				color: var(--text);
+				font-family: var(--font-text);
+				line-height: 1.7;
+			}
+
+			.legal-wrap {
+				width: min(720px, 92vw);
+				flex: 1;
+				padding: 2.5rem 0 3rem;
+			}
+
+			.legal-brand {
+				margin: 0 0 1.25rem;
+			}
+
+			.legal-brand a {
+				color: var(--muted);
+				text-decoration: none;
+				font-size: 0.9rem;
+			}
+
+			.legal-brand a:hover {
+				color: var(--accent);
+			}
+
+			.legal-card {
+				background: var(--surface);
+				border: 1px solid var(--rule);
+				border-radius: 16px;
+				padding: 2.25rem;
+			}
+
+			:global(h1) {
+				margin: 0 0 0.25rem;
+				font-size: 1.6rem;
+			}
+
+			:global(h2) {
+				font-size: 1.05rem;
+				color: var(--accent);
+				margin: 1.75rem 0 0.5rem;
+			}
+
+			:global(p) {
+				margin: 0 0 1rem;
+				max-width: 65ch;
+			}
+
+			:global(.muted) {
+				color: var(--muted);
+				font-size: 0.85rem;
+			}
+
+			:global(a) {
+				color: var(--accent);
+			}
+
+			@media (max-width: 560px) {
+				.legal-card {
+					padding: 1.5rem;
+				}
+			}
+		</style>
+	</body>
+</html>

@@ -80,8 +80,31 @@ npm run lint
 ESLint (config plate `eslint.config.js`) avec `eslint-plugin-astro` pour les
 fichiers `.astro`.
 
-## Notes d'implémentation
+## Identité visuelle
 
+- **Palette** : terminal sombre sur fond anthracite — `--bg #12141a`, panneau
+  `--surface #1b1e27`, accent bleu `--accent #5b8fff`, correct `--correct
+  #35d07f`, incorrect `--incorrect #ff5c5c`. Couleurs nommées via des tokens
+  CSS (`:root`), aucune valeur hex hors tokens.
+- **Typographie** : **IBM Plex Mono** (400 + 600) auto-hébergée via
+  `@fontsource` — cohérente avec l'identité « machine/terminal » de l'outil ;
+  aucune requête vers Google Fonts. Token `--font-text`.
+- **Chargement** : un état de chargement (squelette + « Préparation du
+  texte… ») est affiché avant l'apparition du test.
+
+## Pages légales & erreurs
+
+- Trois pages générées par Astro : `/mentions-legales/`, `/confidentialite/`
+  (RGPD), `/contact/`, servies par un layout commun (`src/layouts/LegalLayout.astro`)
+  qui reprend le thème mono sombre.
+- `src/components/Footer.astro` relie ces trois pages en bas de chaque écran
+  (il est importé par la page principale et par le layout légal).
+- `src/pages/404.astro` : page d'erreur personnalisée stylée sur le thème.
+
+⚠️ Compléter les champs `[À compléter]` et l'email `contact@exemple.fr` dans
+les pages légales avant toute mise en production.
+
+## Notes d'implémentation
 - Le WPM utilise la formule standard des tests de frappe :
   `(caractères corrects / 5) / minutes écoulées`, arrondie à l'entier. Le
   chronomètre ne démarre qu'à la première frappe, jamais à l'affichage de la

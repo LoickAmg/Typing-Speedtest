@@ -15,17 +15,17 @@
  * - "pending"   : caractère pas encore atteint
  */
 export function diffChars(target, typed) {
-  const result = [];
+  const chars = [];
   for (let i = 0; i < target.length; i++) {
     if (i >= typed.length) {
-      result.push({ char: target[i], status: "pending" });
+      chars.push({ char: target[i], status: "pending" });
     } else if (typed[i] === target[i]) {
-      result.push({ char: target[i], status: "correct" });
+      chars.push({ char: target[i], status: "correct" });
     } else {
-      result.push({ char: target[i], status: "incorrect" });
+      chars.push({ char: target[i], status: "incorrect" });
     }
   }
-  return result;
+  return chars;
 }
 
 /**

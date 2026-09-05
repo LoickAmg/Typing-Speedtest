@@ -1,4 +1,8 @@
 ---
+import "@fontsource/ibm-plex-mono/400.css";
+import "@fontsource/ibm-plex-mono/600.css";
+import Footer from "../components/Footer.astro";
+
 const wordCountOptions = [10, 25, 50];
 ---
 
@@ -17,19 +21,25 @@ const wordCountOptions = [10, 25, 50];
 		<main>
 			<h1>Typing Speedtest</h1>
 
-			<div class="controls" id="word-count-controls" role="group" aria-label="Nombre de mots">
+			<div id="loading" class="loader" role="status" aria-live="polite">
+				<span class="skeleton-line"></span>
+				<span class="loader-text">Préparation du texte…</span>
+			</div>
+
+			<div id="app" class="app hidden">
+				<div class="controls" id="word-count-controls" role="group" aria-label="Nombre de mots">
 				{
 					wordCountOptions.map((count, index) => (
 						<button
 							type="button"
 							class="count-btn"
 							class:list={[{ active: index === 1 }]}
-data-count={count}
-								aria-pressed={index === 1}
-							>
-								{count} mots
-						</button>
-					))
+	data-count={count}
+							aria-pressed={index === 1}
+						>
+							{count} mots
+					</button>
+				))
 				}
 			</div>
 
@@ -69,7 +79,10 @@ data-count={count}
 				</p>
 				<button type="button" id="restart">Recommencer</button>
 			</div>
+			</div>
 		</main>
+
+		<Footer />
 
 		<script>
 			import { buildTargetText } from "../lib/words.js";
@@ -222,6 +235,16 @@ data-count={count}
 			});
 
 			resetTest();
+
+			// Le texte initial est pret : on bascule du squelette de chargement
+			// vers l'app. loadingEl/appEl n'etaient jamais references avant ce
+			// point, donc le squelette "Preparation du texte..." restait affiche
+			// en permanence au-dessus de l'app (qui, elle, restait deja visible
+			// faute de regle CSS .hidden generique - voir le style ci-dessous).
+			const loadingEl = document.getElementById("loading");
+			const appEl = document.getElementById("app");
+			loadingEl.classList.add("hidden");
+			appEl.classList.remove("hidden");
 		</script>
 
 		<style>
@@ -230,10 +253,16 @@ data-count={count}
 				--bg: #12141a;
 				--surface: #1b1e27;
 				--text: #e7e9ee;
-				--muted: #6b7280;
-				--accent: #4f8cff;
+				--muted: #99a0b0;
+				--accent: #5b8fff;
 				--correct: #35d07f;
 				--incorrect: #ff5c5c;
+				--control-border: #3a3f4c;
+				--surface-tint: rgba(255, 255, 255, 0.02);
+				--incorrect-tint: rgba(255, 92, 92, 0.15);
+				--on-accent: #0a0d14;
+				--font-text: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo,
+					Consolas, monospace;
 			}
 
 			* {
@@ -248,11 +277,7 @@ data-count={count}
 				justify-content: center;
 				background: var(--bg);
 				color: var(--text);
-				font-family:
-					system-ui,
-					-apple-system,
-					"Segoe UI",
-					sans-serif;
+				font-family: var(--font-text);
 			}
 
 			main {
@@ -269,6 +294,47 @@ data-count={count}
 				text-align: center;
 			}
 
+			.hidden {
+				display: none;
+			}
+
+			.loader {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 0.75rem;
+				padding: 1.5rem 0;
+			}
+
+			.skeleton-line {
+				display: block;
+				width: 80%;
+				height: 1.4rem;
+				border-radius: 6px;
+				background: linear-gradient(
+					90deg,
+					var(--surface-tint) 25%,
+					rgba(255, 255, 255, 0.08) 50%,
+					var(--surface-tint) 75%
+				);
+				background-size: 200% 100%;
+				animation: skeleton-pulse 1.4s ease-in-out infinite;
+			}
+
+			.loader-text {
+				color: var(--muted);
+				font-size: 0.9rem;
+			}
+
+			@keyframes skeleton-pulse {
+				0% {
+					background-position: 200% 0;
+				}
+				100% {
+					background-position: -200% 0;
+				}
+			}
+
 			.controls {
 				display: flex;
 				gap: 0.5rem;
@@ -279,7 +345,7 @@ data-count={count}
 			.count-btn {
 				padding: 0.4rem 0.9rem;
 				border-radius: 999px;
-				border: 1px solid #333;
+				border: 1px solid var(--control-border);
 				background: transparent;
 				color: var(--muted);
 				cursor: pointer;
@@ -311,7 +377,7 @@ data-count={count}
 				letter-spacing: 0.02em;
 				text-align: center;
 				color: var(--muted);
-				background: rgba(255, 255, 255, 0.02);
+				background: var(--surface-tint);
 				border-radius: 10px;
 				padding: 1.25rem 1.5rem;
 				cursor: text;
@@ -338,7 +404,7 @@ data-count={count}
 			.text-display :global(span.incorrect) {
 				color: var(--incorrect);
 				text-decoration: underline;
-				background: rgba(255, 92, 92, 0.15);
+				background: var(--incorrect-tint);
 				border-radius: 3px;
 			}
 
@@ -400,7 +466,7 @@ data-count={count}
 				border-radius: 8px;
 				border: none;
 				background: var(--accent);
-				color: white;
+				color: var(--on-accent);
 				cursor: pointer;
 				font-size: 0.95rem;
 			}

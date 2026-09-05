@@ -1,0 +1,81 @@
+---
+import "@fontsource/ibm-plex-mono/400.css";
+import "@fontsource/ibm-plex-mono/600.css";
+---
+
+<!doctype html>
+<html lang="fr">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="robots" content="noindex" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<title>404 — Non trouvé · Typing Speedtest</title>
+	</head>
+	<body>
+		<main class="nf">
+			<p class="nf__code">404</p>
+			<h1>Cette page n'existe pas.</h1>
+			<p>Le texte demandé est introuvable : il a été supprimé ou l'adresse est erronée.</p>
+			<p><a href="/" class="nf__back">&larr; Retour au test</a></p>
+		</main>
+
+		<style>
+			:root {
+				color-scheme: dark;
+				--bg: #12141a;
+				--surface: #1b1e27;
+				--text: #e7e9ee;
+				--muted: #99a0b0;
+				--accent: #5b8fff;
+				--font-text: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo,
+					Consolas, monospace;
+			}
+
+			body {
+				margin: 0;
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background: var(--bg);
+				color: var(--text);
+				font-family: var(--font-text);
+			}
+
+			.nf {
+				text-align: center;
+				padding: 2rem;
+			}
+
+			.nf__code {
+				margin: 0 0 0.5rem;
+				color: var(--accent);
+				font-size: 3rem;
+				font-weight: 600;
+			}
+
+			h1 {
+				margin: 0 0 0.75rem;
+				font-size: 1.5rem;
+			}
+
+			p {
+				color: var(--muted);
+				max-width: 44ch;
+				margin: 0 auto;
+			}
+
+			.nf__back {
+				display: inline-block;
+				margin-top: 1.5rem;
+				color: var(--accent);
+				text-decoration: none;
+			}
+
+			.nf__back:hover {
+				text-decoration: underline;
+			}
+		</style>
+	</body>
+</html>
