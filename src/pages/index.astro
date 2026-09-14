@@ -2,92 +2,132 @@
 import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-mono/600.css";
 import Footer from "../components/Footer.astro";
+import { renderKeyboardHTML } from "../lib/keyboard.js";
+import { LANGUAGES } from "../lib/languages.js";
 
 const wordCountOptions = [10, 25, 50];
+const defaultKeyboardHTML = renderKeyboardHTML("qwerty");
 ---
 
 <html lang="fr">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<title>Typing Speedtest</title>
-		<meta
-			name="description"
-			content="Test de vitesse de frappe minimaliste — WPM et précision, en Astro + JS vanilla."
-		/>
+		<meta name="description" content="Typing speed test — WPM and accuracy, interactive visual keyboard." />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="theme-color" content="#0f1117" />
 	</head>
 	<body>
-		<main>
-			<h1>Typing Speedtest</h1>
-
-			<div id="loading" class="loader" role="status" aria-live="polite">
-				<span class="skeleton-line"></span>
-				<span class="loader-text">Préparation du texte…</span>
-			</div>
-
-			<div id="app" class="app hidden">
-				<div class="controls" id="word-count-controls" role="group" aria-label="Nombre de mots">
-				{
-					wordCountOptions.map((count, index) => (
-						<button
-							type="button"
-							class="count-btn"
-							class:list={[{ active: index === 1 }]}
-	data-count={count}
-							aria-pressed={index === 1}
-						>
-							{count} mots
-					</button>
-				))
-				}
-			</div>
-
-			<div class="stats-bar" aria-live="polite" aria-atomic="true">
-				<span>WPM <strong id="wpm">0</strong></span>
-				<span>Précision <strong id="accuracy">100</strong>%</span>
-				<span>Temps <strong id="elapsed">0.0</strong>s</span>
-			</div>
-
-			<div
-					id="text-display"
-					class="text-display"
-					tabindex="0"
-					role="button"
-					aria-label="Zone de texte à taper. Appuyez sur Entrée pour commencer."
-				>
+		<header class="site-header">
+			<h1 class="site-title" id="site-title">Typing Speedtest</h1>
+			<div class="settings-bar" id="settings-bar">
+				<div class="setting-group">
+					<label for="lang-select" class="setting-label" id="label-language">Language</label>
+					<select id="lang-select" class="setting-select">
+						{LANGUAGES.map((lang) => (
+							<option value={lang.code} selected={lang.code === "en"}>
+								{lang.flag} {lang.name}
+							</option>
+						))}
+					</select>
 				</div>
-
-			<input
-				id="typing-input"
-				class="sr-input"
-				autocomplete="off"
-				autocorrect="off"
-				autocapitalize="off"
-				spellcheck="false"
-									aria-label="Votre saisie"
-					aria-describedby="typing-hint"
-
-			/>
-
-			<p class="hint" id="typing-hint">Clique sur le texte puis tape pour démarrer. Échap pour recommencer.</p>
-
-			<div id="result" class="result hidden" role="status" aria-live="polite">
-				<p>
-					Terminé ! <strong id="final-wpm"></strong> WPM, <strong id="final-accuracy"></strong>% de
-					précision.
-				</p>
-				<button type="button" id="restart">Recommencer</button>
+				<div class="setting-group">
+					<label for="layout-select" class="setting-label" id="label-layout">Layout</label>
+					<select id="layout-select" class="setting-select">
+						<option value="qwerty" selected>QWERTY</option>
+						<option value="azerty">AZERTY</option>
+					</select>
+				</div>
+				<div class="setting-group">
+					<label for="mode-select" class="setting-label" id="label-mode">Mode</label>
+					<select id="mode-select" class="setting-select">
+						<option value="coherent" id="opt-coherent" selected>Coherent</option>
+						<option value="incoherent" id="opt-incoherent">Incoherent</option>
+					</select>
+				</div>
+				<button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle theme">
+					<span class="theme-icon-dark">☀</span>
+					<span class="theme-icon-light">☾</span>
+				</button>
 			</div>
+		</header>
+
+		<main>
+			<!-- Word count -->
+			<div class="controls" id="word-count-controls" role="group" aria-label="Word count">
+				<span class="controls-label" id="label-words">Words</span>
+				<div class="count-btns">
+					{wordCountOptions.map((count, index) => (
+						<button type="button" class="count-btn" class:list={[{ active: index === 1 }]} data-count={count} aria-pressed={index === 1}>
+							{count}
+						</button>
+					))}
+				</div>
+			</div>
+
+			<!-- Text -->
+			<div id="text-display" class="text-display" tabindex="0" role="button" aria-label="Text zone. Click then type to start."></div>
+
+			<input id="typing-input" class="sr-input" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Typing input" />
+
+			<!-- Stats -->
+			<div class="stats-bar" aria-live="polite" aria-atomic="true">
+				<div class="stat">
+					<span class="stat-label" id="label-wpm">WPM</span>
+					<strong id="wpm" class="stat-value">0</strong>
+				</div>
+				<div class="stat">
+					<span class="stat-label" id="label-accuracy">Accuracy</span>
+					<strong id="accuracy" class="stat-value">100</strong><span class="stat-unit">%</span>
+				</div>
+				<div class="stat">
+					<span class="stat-label" id="label-time">Time</span>
+					<strong id="elapsed" class="stat-value">0.0</strong><span class="stat-unit">s</span>
+				</div>
+			</div>
+
+			<!-- Keyboard -->
+			<div class="keyboard" id="keyboard" aria-hidden="true" set:html={defaultKeyboardHTML} />
+
+			<p class="hint" id="typing-hint">
+				<span id="hint-text">Click on the text then type to start.</span>
+				<kbd>Esc</kbd> <span id="hint-esc-text">to restart.</span>
+			</p>
+
+			<!-- Result -->
+			<div id="result" class="result hidden" role="status" aria-live="polite">
+				<div class="result-inner">
+					<p class="result-title" id="result-title">Done!</p>
+					<div class="result-stats">
+						<div class="result-stat">
+							<strong id="final-wpm" class="result-stat-value">0</strong>
+							<span class="result-stat-label" id="label-final-wpm">WPM</span>
+						</div>
+						<div class="result-stat">
+							<strong id="final-accuracy" class="result-stat-value">0</strong>
+							<span class="result-stat-label" id="label-final-accuracy">% accuracy</span>
+						</div>
+					</div>
+					<button type="button" id="restart" class="restart-btn" id="btn-restart">Restart</button>
+				</div>
 			</div>
 		</main>
 
 		<Footer />
 
 		<script>
-			import { buildTargetText } from "../lib/words.js";
+			import { renderKeyboardHTML } from "../lib/keyboard.js";
 			import { computeStats, diffChars, isComplete } from "../lib/typing.js";
+			import { generateText } from "../lib/strings.js";
+			import { initTheme, toggleTheme as doToggleTheme, getTheme } from "../lib/themes.js";
+			import { loadSettings, getSettings, updateSettings } from "../lib/settings.js";
+			import { detectKeyboardLayout, getUIStrings } from "../lib/languages.js";
 
+			// DOM refs
 			const textDisplay = document.getElementById("text-display");
 			const input = document.getElementById("typing-input");
 			const wpmEl = document.getElementById("wpm");
@@ -98,40 +138,95 @@ const wordCountOptions = [10, 25, 50];
 			const finalAccuracyEl = document.getElementById("final-accuracy");
 			const restartBtn = document.getElementById("restart");
 			const countButtons = document.querySelectorAll(".count-btn");
+			const keyboardEl = document.getElementById("keyboard");
+			const langSelect = document.getElementById("lang-select");
+			const layoutSelect = document.getElementById("layout-select");
+			const modeSelect = document.getElementById("mode-select");
+			const themeToggle = document.getElementById("theme-toggle");
 
+			// i18n refs
+			const titleEl = document.getElementById("site-title");
+			const labelLang = document.getElementById("label-language");
+			const labelLayout = document.getElementById("label-layout");
+			const labelMode = document.getElementById("label-mode");
+			const labelWords = document.getElementById("label-words");
+			const labelWpm = document.getElementById("label-wpm");
+			const labelAccuracy = document.getElementById("label-accuracy");
+			const labelTime = document.getElementById("label-time");
+			const hintText = document.getElementById("hint-text");
+			const hintEscText = document.getElementById("hint-esc-text");
+			const resultTitle = document.getElementById("result-title");
+			const labelFinalWpm = document.getElementById("label-final-wpm");
+			const labelFinalAccuracy = document.getElementById("label-final-accuracy");
+			const btnRestart = document.getElementById("btn-restart");
+			const optCoherent = document.getElementById("opt-coherent");
+			const optIncoherent = document.getElementById("opt-incoherent");
+
+			// State
 			let wordCount = 25;
 			let target = "";
 			let typed = "";
 			let startTime = null;
 			let finished = false;
 			let tickHandle = null;
+			let nextKeyEl = null;
+			let currentLayout = "qwerty";
+			let currentLang = "en";
+			let currentMode = "coherent";
 
-			// Le texte tapé est suivi ici, dans une variable JS, plutôt que lu depuis
-			// `input.value`. Avec un `<input>` positionné hors écran (nécessaire pour
-			// rester invisible tout en gardant le focus clavier), Chromium peut
-			// réinitialiser `selectionStart` à 0 sur certains caractères (l'espace en
-			// particulier) en gérant son défilement interne — le texte tapé se
-			// retrouvait alors inséré en tête du champ plutôt qu'à la fin, ce qui
-			// mélangeait complètement l'ordre des caractères capturés. `keydown` +
-			// `preventDefault()` évite ce problème : le DOM natif du champ n'est
-			// jamais utilisé comme source de vérité, seule la variable `typed` compte.
+			const keyEls = new Map();
+			const charToKeyEl = new Map();
+
+			function rebuildKeyboardIndex() {
+				keyEls.clear();
+				charToKeyEl.clear();
+				if (!keyboardEl) return;
+				for (const kbd of keyboardEl.querySelectorAll(".key")) {
+					keyEls.set(kbd.dataset.code, kbd);
+					const ch = kbd.dataset.char;
+					if (ch) charToKeyEl.set(ch, kbd);
+				}
+			}
+
+			function setKeyboardLayout(layoutName) {
+				currentLayout = layoutName;
+				keyboardEl.innerHTML = renderKeyboardHTML(layoutName);
+				rebuildKeyboardIndex();
+				updateNextKeyHighlight();
+			}
 
 			function renderText() {
-				// Un vrai espace (pas &nbsp;) : chaque caractère est déjà isolé dans
-				// son propre <span>, donc il n'y a jamais deux espaces adjacents à
-				// fusionner — un espace normal ne pose aucun problème de rendu, et
-				// contrairement à &nbsp; (espace *insécable*), il laisse le
-				// navigateur retourner à la ligne entre les mots. Avec &nbsp;, tout
-				// le texte formait une seule ligne insécable qui débordait de son
-				// cadre au lieu de passer à la ligne.
 				const diff = diffChars(target, typed);
 				textDisplay.innerHTML = diff
 					.map((entry, index) => {
 						const cursor = index === typed.length ? " cursor" : "";
-						const char = entry.char === " " ? " " : entry.char;
+						const char = entry.char === " " ? "\u00A0" : entry.char;
 						return `<span class="${entry.status}${cursor}">${char}</span>`;
 					})
 					.join("");
+				updateNextKeyHighlight();
+			}
+
+			function clearAllKeyHighlights() {
+				for (const kbd of keyEls.values()) {
+					kbd.classList.remove("key-pressed", "key-correct", "key-incorrect", "key-next");
+				}
+			}
+
+			function updateNextKeyHighlight() {
+				if (nextKeyEl) nextKeyEl.classList.remove("key-next");
+				if (finished || typed.length >= target.length) { nextKeyEl = null; return; }
+				const nextChar = target[typed.length];
+				const el = charToKeyEl.get(nextChar);
+				if (el) { el.classList.add("key-next"); nextKeyEl = el; }
+			}
+
+			function flashKey(code, correct) {
+				const el = keyEls.get(code);
+				if (!el) return;
+				const cls = correct ? "key-correct" : "key-incorrect";
+				el.classList.add(cls);
+				setTimeout(() => el.classList.remove(cls), correct ? 300 : 400);
 			}
 
 			function updateStats() {
@@ -144,10 +239,7 @@ const wordCountOptions = [10, 25, 50];
 			}
 
 			function stopTimer() {
-				if (tickHandle !== null) {
-					clearInterval(tickHandle);
-					tickHandle = null;
-				}
+				if (tickHandle !== null) { clearInterval(tickHandle); tickHandle = null; }
 			}
 
 			function finishTest() {
@@ -157,100 +249,163 @@ const wordCountOptions = [10, 25, 50];
 				finalWpmEl.textContent = String(stats.wpm);
 				finalAccuracyEl.textContent = String(stats.accuracy);
 				resultEl.classList.remove("hidden");
+				clearAllKeyHighlights();
 				input.blur();
 			}
 
 			function resetTest() {
-				target = buildTargetText(wordCount);
+				const settings = getSettings();
+				const result = generateText({ count: wordCount, langCode: settings.langCode, mode: settings.mode });
+				target = result.text;
 				typed = "";
 				startTime = null;
 				finished = false;
 				stopTimer();
 				input.value = "";
 				resultEl.classList.add("hidden");
+				clearAllKeyHighlights();
 				renderText();
 				updateStats();
 				input.focus();
 			}
 
 			function onTypedChange() {
-				if (startTime === null) {
-					startTime = performance.now();
-					tickHandle = setInterval(updateStats, 100);
-				}
-
+				if (startTime === null) { startTime = performance.now(); tickHandle = setInterval(updateStats, 100); }
 				renderText();
 				updateStats();
-
-				if (isComplete(target, typed)) {
-					finishTest();
-				}
+				if (isComplete(target, typed)) finishTest();
 			}
 
-				textDisplay.addEventListener("click", () => input.focus());
-				textDisplay.addEventListener("keydown", (event) => {
-					if (event.key === "Enter" || event.key === " ") {
-						event.preventDefault();
-						input.focus();
-					}
-				});
+			function applyTheme(theme) { document.documentElement.dataset.theme = theme; }
 
-			input.addEventListener("keydown", (event) => {
-				if (event.key === "Escape") {
-					resetTest();
-					return;
-				}
+			// i18n — apply translations to all UI elements
+			function applyTranslations(langCode) {
+				const ui = getUIStrings(langCode);
+				titleEl.textContent = ui.title;
+				labelLang.textContent = ui.language;
+				labelLayout.textContent = ui.layout;
+				labelMode.textContent = ui.mode;
+				labelWords.textContent = ui.words;
+				labelWpm.textContent = ui.wpm;
+				labelAccuracy.textContent = ui.accuracy;
+				labelTime.textContent = ui.time;
+				hintText.textContent = ui.hint;
+				hintEscText.textContent = ui.hintEsc;
+				resultTitle.textContent = ui.done;
+				labelFinalWpm.textContent = ui.wpm;
+				labelFinalAccuracy.textContent = ui.accuracyLabel;
+				btnRestart.textContent = ui.restart;
+				optCoherent.textContent = ui.coherent;
+				optIncoherent.textContent = ui.incoherent;
+				document.title = ui.title;
+				document.documentElement.lang = langCode;
+			}
 
+			// Events
+			textDisplay.addEventListener("click", () => input.focus());
+			textDisplay.addEventListener("keydown", (e) => {
+				if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.focus(); }
+			});
+
+			input.addEventListener("keydown", (e) => {
+				if (e.key === "Escape") { resetTest(); return; }
 				if (finished) return;
-				if (event.ctrlKey || event.metaKey || event.altKey) return;
-
-				if (event.key === "Backspace") {
-					event.preventDefault();
-					if (typed.length > 0) {
-						typed = typed.slice(0, -1);
-						onTypedChange();
-					}
+				if (e.ctrlKey || e.metaKey || e.altKey) return;
+				const keyEl = keyEls.get(e.code);
+				if (keyEl) keyEl.classList.add("key-pressed");
+				if (e.key === "Backspace") {
+					e.preventDefault();
+					if (typed.length > 0) { typed = typed.slice(0, -1); onTypedChange(); }
 					return;
 				}
-
-				// Un seul caractère imprimable (lettre, chiffre, espace, ponctuation...).
-				// Exclut les touches spéciales ("Shift", "Tab", "ArrowLeft"...) dont
-				// `event.key` fait plus d'un caractère.
-				if (event.key.length === 1) {
-					event.preventDefault();
-					typed += event.key;
+				if (e.key.length === 1) {
+					e.preventDefault();
+					const willBeCorrect = e.key === target[typed.length];
+					typed += e.key;
 					onTypedChange();
+					if (e.code) flashKey(e.code, willBeCorrect);
 				}
+			});
+
+			input.addEventListener("keyup", (e) => {
+				const keyEl = keyEls.get(e.code);
+				if (keyEl) keyEl.classList.remove("key-pressed");
 			});
 
 			restartBtn.addEventListener("click", resetTest);
-			countButtons.forEach((button) => {
-				button.addEventListener("click", () => {
+
+			countButtons.forEach((btn) => {
+				btn.addEventListener("click", () => {
 					countButtons.forEach((b) => b.classList.remove("active"));
-					button.classList.add("active");
-					countButtons.forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
-					wordCount = Number(button.dataset.count);
+					btn.classList.add("active");
+					countButtons.forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+					wordCount = Number(btn.dataset.count);
+					updateSettings({ wordCount });
 					resetTest();
 				});
 			});
 
-			resetTest();
+			langSelect.addEventListener("change", () => {
+				currentLang = langSelect.value;
+				updateSettings({ langCode: currentLang });
+				applyTranslations(currentLang);
+				resetTest();
+			});
 
-			// Le texte initial est pret : on bascule du squelette de chargement
-			// vers l'app. loadingEl/appEl n'etaient jamais references avant ce
-			// point, donc le squelette "Preparation du texte..." restait affiche
-			// en permanence au-dessus de l'app (qui, elle, restait deja visible
-			// faute de regle CSS .hidden generique - voir le style ci-dessous).
-			const loadingEl = document.getElementById("loading");
-			const appEl = document.getElementById("app");
-			loadingEl.classList.add("hidden");
-			appEl.classList.remove("hidden");
+			layoutSelect.addEventListener("change", () => {
+				currentLayout = layoutSelect.value;
+				updateSettings({ layout: currentLayout });
+				setKeyboardLayout(currentLayout);
+				resetTest();
+			});
+
+			modeSelect.addEventListener("change", () => {
+				currentMode = modeSelect.value;
+				updateSettings({ mode: currentMode });
+				resetTest();
+			});
+
+			themeToggle.addEventListener("click", () => { const t = doToggleTheme(); applyTheme(t); });
+
+			// Init
+			loadSettings();
+			const settings = getSettings();
+			currentLang = settings.langCode;
+			currentLayout = settings.layout;
+			currentMode = settings.mode;
+			wordCount = settings.wordCount;
+			langSelect.value = currentLang;
+			layoutSelect.value = currentLayout;
+			modeSelect.value = currentMode;
+			setKeyboardLayout(currentLayout);
+			applyTranslations(currentLang);
+
+			countButtons.forEach((btn) => {
+				const isActive = Number(btn.dataset.count) === wordCount;
+				btn.classList.toggle("active", isActive);
+				btn.setAttribute("aria-pressed", String(isActive));
+			});
+
+			initTheme();
+			applyTheme(getTheme());
+
+			if (!localStorage.getItem("typing-speedtest-settings")) {
+				detectKeyboardLayout().then((detected) => {
+					currentLayout = detected;
+					layoutSelect.value = detected;
+					updateSettings({ layout: detected });
+					setKeyboardLayout(detected);
+					resetTest();
+				});
+			}
+
+			resetTest();
 		</script>
 
 		<style>
-			:root {
+			:root[data-theme="dark"], :root {
 				color-scheme: dark;
-				--bg: #12141a;
+				--bg: #0f1117;
 				--surface: #1b1e27;
 				--text: #e7e9ee;
 				--muted: #99a0b0;
@@ -258,217 +413,479 @@ const wordCountOptions = [10, 25, 50];
 				--correct: #35d07f;
 				--incorrect: #ff5c5c;
 				--control-border: #3a3f4c;
-				--surface-tint: rgba(255, 255, 255, 0.02);
+				--surface-tint: rgba(255, 255, 255, 0.03);
 				--incorrect-tint: rgba(255, 92, 92, 0.15);
 				--on-accent: #0a0d14;
-				--font-text: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo,
-					Consolas, monospace;
+				--font-text: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+				--key-bg: #252833;
+				--key-border: #3a3f4c;
+				--key-size: 38px;
+				--key-gap: 4px;
 			}
 
-			* {
-				box-sizing: border-box;
+			:root[data-theme="light"] {
+				color-scheme: light;
+				--bg: #f0f2f5;
+				--surface: #ffffff;
+				--text: #1a1d26;
+				--muted: #6b7280;
+				--accent: #2563eb;
+				--correct: #16a34a;
+				--incorrect: #dc2626;
+				--control-border: #d1d5db;
+				--surface-tint: rgba(0, 0, 0, 0.02);
+				--incorrect-tint: rgba(220, 38, 38, 0.08);
+				--on-accent: #ffffff;
+				--font-text: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+				--key-bg: #e5e7eb;
+				--key-border: #d1d5db;
+				--key-size: 38px;
+				--key-gap: 4px;
 			}
+		</style>
+
+		<style is:global>
+			*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 			body {
-				margin: 0;
 				min-height: 100vh;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				background: var(--bg);
-				color: var(--text);
-				font-family: var(--font-text);
-			}
-
-			main {
-				width: min(720px, 92vw);
-				padding: 2.5rem;
-				background: var(--surface);
-				border-radius: 16px;
-				box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
-			}
-
-			h1 {
-				margin: 0 0 1.5rem;
-				font-size: 1.75rem;
-				text-align: center;
-			}
-
-			.hidden {
-				display: none;
-			}
-
-			.loader {
+				min-height: 100dvh;
 				display: flex;
 				flex-direction: column;
 				align-items: center;
-				gap: 0.75rem;
-				padding: 1.5rem 0;
+				background: linear-gradient(160deg, #0b0d12 0%, var(--bg) 40%, #151820 100%);
+				color: var(--text);
+				font-family: var(--font-text);
+				-webkit-tap-highlight-color: transparent;
+				-webkit-text-size-adjust: 100%;
+				touch-action: manipulation;
 			}
 
-			.skeleton-line {
-				display: block;
-				width: 80%;
-				height: 1.4rem;
-				border-radius: 6px;
-				background: linear-gradient(
-					90deg,
-					var(--surface-tint) 25%,
-					rgba(255, 255, 255, 0.08) 50%,
-					var(--surface-tint) 75%
-				);
-				background-size: 200% 100%;
-				animation: skeleton-pulse 1.4s ease-in-out infinite;
+			[data-theme="light"] body {
+				background: linear-gradient(160deg, #e8ebee 0%, var(--bg) 40%, #f0f2f5 100%);
+			}
+		</style>
+
+		<style>
+			/* ─── Header ──────────────────────────────────────────── */
+
+			.site-header {
+				width: 100%;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 0.6rem;
+				padding: 1.25rem 1rem 0;
 			}
 
-			.loader-text {
+			.site-title {
+				font-size: 1.35rem;
+				letter-spacing: -0.02em;
+				text-align: center;
+				color: var(--text);
+			}
+
+			.settings-bar {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 0.6rem;
+				flex-wrap: wrap;
+			}
+
+			.setting-group {
+				display: flex;
+				align-items: center;
+				gap: 0.3rem;
+			}
+
+			.setting-label {
 				color: var(--muted);
-				font-size: 0.9rem;
+				font-size: 0.68rem;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
 			}
 
-			@keyframes skeleton-pulse {
-				0% {
-					background-position: 200% 0;
-				}
-				100% {
-					background-position: -200% 0;
-				}
+			.setting-select {
+				padding: 0.4rem 0.55rem;
+				border-radius: 8px;
+				border: 1px solid var(--control-border);
+				background: var(--surface);
+				color: var(--text);
+				font-family: var(--font-text);
+				font-size: 0.78rem;
+				cursor: pointer;
+				outline: none;
+				transition: border-color 0.15s ease;
+				-webkit-appearance: none;
+				appearance: none;
 			}
+
+			.setting-select:hover { border-color: var(--muted); }
+			.setting-select:focus { border-color: var(--accent); }
+
+			.theme-toggle {
+				width: 32px;
+				height: 32px;
+				min-width: 44px;
+				min-height: 44px;
+				border-radius: 8px;
+				border: 1px solid var(--control-border);
+				background: var(--surface);
+				color: var(--muted);
+				cursor: pointer;
+				display: grid;
+				place-items: center;
+				font-size: 1rem;
+				transition: all 0.15s ease;
+				padding: 0;
+			}
+
+			.theme-toggle:hover { border-color: var(--muted); color: var(--text); }
+
+			.theme-icon-light { display: none; }
+			:root[data-theme="light"] .theme-icon-dark { display: none; }
+			:root[data-theme="light"] .theme-icon-light { display: inline; }
+
+			/* ─── Main card ───────────────────────────────────────── */
+
+			main {
+				width: min(780px, 94vw);
+				max-width: 100%;
+				margin: 1.25rem 0.75rem 0;
+				padding: 1.75rem 2rem 1.5rem;
+				background: var(--surface);
+				border-radius: 20px;
+				box-shadow:
+					0 24px 80px rgba(0, 0, 0, 0.45),
+					0 0 0 1px rgba(255, 255, 255, 0.04);
+				overflow: hidden;
+			}
+
+			[data-theme="light"] main {
+				box-shadow:
+					0 24px 80px rgba(0, 0, 0, 0.08),
+					0 0 0 1px rgba(0, 0, 0, 0.06);
+			}
+
+			.hidden { display: none; }
+
+			/* ─── Controls ───────────────────────────────────────── */
 
 			.controls {
 				display: flex;
-				gap: 0.5rem;
+				align-items: center;
 				justify-content: center;
-				margin-bottom: 1.5rem;
+				gap: 0.6rem;
+				margin-bottom: 1rem;
+			}
+
+			.controls-label {
+				color: var(--muted);
+				font-size: 0.72rem;
+				text-transform: uppercase;
+				letter-spacing: 0.04em;
+			}
+
+			.count-btns {
+				display: flex;
+				gap: 0.4rem;
 			}
 
 			.count-btn {
-				padding: 0.4rem 0.9rem;
+				padding: 0.45rem 0.85rem;
+				min-height: 40px;
+				min-width: 40px;
 				border-radius: 999px;
 				border: 1px solid var(--control-border);
 				background: transparent;
 				color: var(--muted);
 				cursor: pointer;
-				font-size: 0.9rem;
+				font-family: var(--font-text);
+				font-size: 0.85rem;
+				transition: all 0.15s ease;
 			}
+
+			.count-btn:hover { border-color: var(--muted); color: var(--text); }
 
 			.count-btn.active {
 				border-color: var(--accent);
 				color: var(--accent);
+				background: rgba(91, 143, 255, 0.08);
 			}
 
-			.stats-bar {
-				display: flex;
-				justify-content: center;
-				gap: 2rem;
-				margin-bottom: 1.5rem;
-				color: var(--muted);
-				font-size: 0.95rem;
+			[data-theme="light"] .count-btn.active {
+				background: rgba(37, 99, 235, 0.08);
 			}
 
-			.stats-bar strong {
-				color: var(--text);
-				font-size: 1.1rem;
-			}
+			/* ─── Text display ───────────────────────────────────── */
 
 			.text-display {
-				font-size: 1.4rem;
-				line-height: 2.1rem;
-				letter-spacing: 0.02em;
+				font-size: 1.45rem;
+				line-height: 2.15rem;
+				letter-spacing: 0.01em;
 				text-align: center;
 				color: var(--muted);
 				background: var(--surface-tint);
-				border-radius: 10px;
-				padding: 1.25rem 1.5rem;
+				border: 1px solid rgba(255, 255, 255, 0.04);
+				border-radius: 12px;
+				padding: 1.2rem 1.4rem;
 				cursor: text;
 				user-select: none;
+				min-height: 5rem;
+				max-width: 100%;
+				overflow-wrap: anywhere;
 			}
 
-			/*
-			 * :global() est indispensable ici : Astro ne "scope" (préfixe avec
-			 * data-astro-cid-...) que les éléments présents dans le template au
-			 * moment du build. Les <span> ci-dessous sont injectés dynamiquement
-			 * en JS via `textDisplay.innerHTML = ...` (voir le <script> plus haut),
-			 * donc ils n'ont jamais cet attribut — sans :global(), ces règles ne
-			 * matchaient tout simplement jamais et le texte restait entièrement
-			 * gris quoi qu'on tape, sans aucun retour visuel correct/incorrect.
-			 */
-			.text-display :global(span.pending) {
-				color: var(--muted);
-			}
+			[data-theme="light"] .text-display { border: 1px solid rgba(0, 0, 0, 0.06); }
 
-			.text-display :global(span.correct) {
-				color: var(--correct);
-			}
+			.text-display :global(span.correct) { color: var(--correct); }
 
 			.text-display :global(span.incorrect) {
 				color: var(--incorrect);
 				text-decoration: underline;
+				text-decoration-thickness: 2px;
 				background: var(--incorrect-tint);
 				border-radius: 3px;
+				padding: 0 1px;
 			}
 
 			.text-display :global(span.cursor) {
-				border-left: 2px solid var(--accent);
+				border-left: 2.5px solid var(--accent);
 				animation: blink-caret 1s step-end infinite;
+				margin-left: -1px;
+				padding-left: 1px;
 			}
 
 			@keyframes blink-caret {
-				0%,
-				100% {
-					border-left-color: var(--accent);
-				}
-				50% {
-					border-left-color: transparent;
-				}
+				0%, 100% { border-left-color: var(--accent); }
+				50% { border-left-color: transparent; }
 			}
 
 			.sr-input {
-				/*
-				 * Champ de saisie invisible mais qui capte le clavier. Volontairement
-				 * PAS réduit à 1x1px : dans une boîte aussi petite, Chromium doit
-				 * faire défiler le contenu du champ à chaque caractère pour garder
-				 * le curseur "visible", et ce défilement interne peut réinitialiser
-				 * `selectionStart` à 0 sur certains caractères (l'espace en
-				 * particulier) — le texte tapé se retrouve alors inséré au début du
-				 * champ au lieu d'être ajouté à la fin, et la valeur capturée ne
-				 * correspond plus à ce qui a été tapé. On garde donc une largeur
-				 * normale, positionnée hors écran.
-				 */
 				position: absolute;
 				left: -9999px;
 				top: 0;
-				width: 20em;
-				height: 1.5em;
+				width: 1px;
+				height: 1px;
 				opacity: 0;
 				pointer-events: none;
+				font-size: 16px;
 			}
+
+			/* ─── Stats ──────────────────────────────────────────── */
+
+			.stats-bar {
+				display: flex;
+				justify-content: center;
+				gap: 2.5rem;
+				margin: 1rem 0;
+			}
+
+			.stat {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 0.15rem;
+			}
+
+			.stat-label {
+				color: var(--muted);
+				font-size: 0.68rem;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+			}
+
+			.stat-value { color: var(--text); font-size: 1.35rem; font-weight: 600; }
+			.stat-unit { color: var(--muted); font-size: 0.82rem; }
+
+			/* ─── Keyboard ───────────────────────────────────────── */
+
+			.keyboard {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: var(--key-gap);
+				padding: 0.6rem 0;
+				max-width: 100%;
+				overflow: hidden;
+			}
+
+			.keyboard :global(.keyboard-row) {
+				display: flex;
+				gap: var(--key-gap);
+				justify-content: center;
+			}
+
+			.keyboard :global(.key) {
+				min-width: var(--key-size);
+				max-width: var(--key-size);
+				height: var(--key-size);
+				background: var(--key-bg);
+				border: 1px solid var(--key-border);
+				border-radius: 6px;
+				display: grid;
+				place-items: center;
+				font-family: var(--font-text);
+				font-size: 0.78rem;
+				color: var(--muted);
+				transition: all 0.1s ease;
+				user-select: none;
+				cursor: default;
+				flex-shrink: 1;
+			}
+
+			.keyboard :global(.key.homing) { position: relative; }
+
+			.keyboard :global(.key.homing)::after {
+				content: "";
+				position: absolute;
+				bottom: 4px;
+				left: 50%;
+				transform: translateX(-50%);
+				width: 6px;
+				height: 2px;
+				border-radius: 1px;
+				background: var(--muted);
+				opacity: 0.4;
+			}
+
+			.keyboard :global(.key.key-pressed) {
+				transform: translateY(1px) scale(0.95);
+				background: var(--accent);
+				color: var(--on-accent);
+				border-color: var(--accent);
+				box-shadow: 0 0 12px rgba(91, 143, 255, 0.3);
+			}
+
+			.keyboard :global(.key.key-next) {
+				border-color: var(--accent);
+				color: var(--accent);
+				animation: key-pulse 1.8s ease-in-out infinite;
+			}
+
+			.keyboard :global(.key.key-correct) {
+				background: var(--correct);
+				color: #000;
+				border-color: var(--correct);
+				box-shadow: 0 0 10px rgba(53, 208, 127, 0.3);
+			}
+
+			.keyboard :global(.key.key-incorrect) {
+				background: var(--incorrect);
+				color: #fff;
+				border-color: var(--incorrect);
+				box-shadow: 0 0 10px rgba(255, 92, 92, 0.3);
+			}
+
+			@keyframes key-pulse {
+				0%, 100% { box-shadow: 0 0 0 0 rgba(91, 143, 255, 0); }
+				50% { box-shadow: 0 0 10px 2px rgba(91, 143, 255, 0.35); }
+			}
+
+			/* ─── Hint ───────────────────────────────────────────── */
 
 			.hint {
 				text-align: center;
 				color: var(--muted);
-				font-size: 0.85rem;
-				margin-top: 0.75rem;
+				font-size: 0.75rem;
+				margin: 0.4rem 0 0;
 			}
 
-			.result {
-				margin-top: 1.5rem;
+			.hint :global(kbd) {
+				display: inline-block;
+				padding: 0.1em 0.45em;
+				border: 1px solid var(--control-border);
+				border-radius: 4px;
+				background: var(--key-bg);
+				font-family: var(--font-text);
+				font-size: 0.85em;
+			}
+
+			/* ─── Result ─────────────────────────────────────────── */
+
+			.result { margin-top: 1rem; }
+			.result.hidden { display: none; }
+
+			.result-inner {
 				text-align: center;
+				padding: 1.5rem;
+				background: var(--surface-tint);
+				border: 1px solid rgba(255, 255, 255, 0.04);
+				border-radius: 12px;
 			}
 
-			.result.hidden {
-				display: none;
-			}
+			[data-theme="light"] .result-inner { border: 1px solid rgba(0, 0, 0, 0.06); }
 
-			.result button {
-				margin-top: 0.5rem;
-				padding: 0.5rem 1.2rem;
-				border-radius: 8px;
+			.result-title { margin: 0 0 1rem; font-size: 1.1rem; color: var(--muted); }
+
+			.result-stats { display: flex; justify-content: center; gap: 3rem; margin-bottom: 1.25rem; }
+
+			.result-stat { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
+			.result-stat-value { font-size: 2rem; font-weight: 600; color: var(--accent); }
+			.result-stat-label { font-size: 0.8rem; color: var(--muted); }
+
+			.restart-btn {
+				padding: 0.55rem 1.5rem;
+				min-height: 44px;
+				border-radius: 10px;
 				border: none;
 				background: var(--accent);
 				color: var(--on-accent);
 				cursor: pointer;
+				font-family: var(--font-text);
 				font-size: 0.95rem;
+				font-weight: 600;
+				transition: all 0.15s ease;
+			}
+
+			.restart-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+			.restart-btn:active { transform: translateY(0); }
+
+			/* ─── Responsive mobile ──────────────────────────────── */
+
+			@media (max-width: 600px) {
+				.site-header { padding: 0.75rem 0.75rem 0; gap: 0.4rem; }
+				.site-title { font-size: 1.15rem; }
+
+				.setting-label { display: none; }
+				.setting-select { font-size: 0.72rem; padding: 0.35rem 0.5rem; }
+
+				main {
+					margin: 0.75rem 0.5rem 0;
+					padding: 1.25rem 0.85rem 1rem;
+					border-radius: 16px;
+				}
+
+				.controls { gap: 0.4rem; margin-bottom: 0.75rem; }
+				.controls-label { font-size: 0.65rem; }
+				.count-btn { padding: 0.35rem 0.7rem; font-size: 0.8rem; min-height: 38px; min-width: 38px; }
+
+				.text-display {
+					font-size: 1rem;
+					line-height: 1.65rem;
+					padding: 0.75rem 0.75rem;
+					min-height: 4rem;
+				}
+
+				.stats-bar { gap: 1.5rem; margin: 0.75rem 0; }
+				.stat-value { font-size: 1.1rem; }
+
+				:root { --key-size: 30px; --key-gap: 2px; }
+				.keyboard :global(.key) { font-size: 0.62rem; }
+
+				.hint { font-size: 0.68rem; }
+
+				.result-stats { gap: 2rem; }
+				.result-stat-value { font-size: 1.6rem; }
+			}
+
+			@media (max-width: 380px) {
+				.settings-bar { gap: 0.35rem; }
+				.setting-select { font-size: 0.68rem; padding: 0.3rem 0.4rem; }
+				.theme-toggle { min-width: 38px; min-height: 38px; }
+				:root { --key-size: 26px; --key-gap: 2px; }
+				.keyboard :global(.key) { font-size: 0.58rem; }
 			}
 		</style>
 	</body>

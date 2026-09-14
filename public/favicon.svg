@@ -1,4 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#12141a"/>
-  <text x="16" y="22" font-family="monospace" font-size="16" fill="#4f8cff" text-anchor="middle">&gt;_</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="12" fill="#1b1e27"/>
+  <rect x="8" y="18" width="48" height="30" rx="4" fill="#252833" stroke="#3a3f4c" stroke-width="1.5"/>
+  <!-- Row 1 -->
+  <rect x="12" y="22" width="5" height="5" rx="1" fill="#3a3f4c"/>
+  <rect x="19" y="22" width="5" height="5" rx="1" fill="#3a3f4c"/>
+  <rect x="26" y="22" width="5" height="5" rx="1" fill="#3a3f4c"/>
+  <rect x="33" y="22" width="5" height="5" rx="1" fill="#3a3f4c"/>
+  <rect x="40" y="22" width="5" height="5" rx="1" fill="#3a3f4c"/>
+  <rect x="47" y="22" width="5" height="5" rx="1" fill="#3a3f4c"/>
+  <!-- Row 2 -->
+  <rect x="14" y="29" width="5" height="5" rx="1" fill="#3a3f4c"/>
+  <rect x="21" y="29" width="5" height="5" rx="1" fill="#3a3f4c"/>
+  <rect x="28" y="29" width="5" height="5" rx="1" fill="#5b8fff"/>
+  <rect x="35" y="29" width="5" height="5" rx="1" fill="#3a3f4c"/>
+  <rect x="42" y="29" width="5" height="5" rx="1" fill="#3a3f4c"/>
+  <!-- Row 3 -->
+  <rect x="16" y="36" width="5" height="5" rx="1" fill="#3a3f4c"/>
+  <rect x="23" y="36" width="5" height="5" rx="1" fill="#3a3f4c"/>
+  <rect x="30" y="36" width="5" height="5" rx="1" fill="#3a3f4c"/>
+  <rect x="37" y="36" width="5" height="5" rx="1" fill="#3a3f4c"/>
+  <rect x="44" y="36" width="5" height="5" rx="1" fill="#3a3f4c"/>
+  <!-- Spacebar -->
+  <rect x="20" y="43" width="24" height="4" rx="1" fill="#3a3f4c"/>
 </svg>
