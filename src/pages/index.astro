@@ -308,6 +308,7 @@ const defaultKeyboardHTML = renderKeyboardHTML("qwerty");
 				if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.focus(); }
 			});
 
+			// Desktop: keydown for visual keyboard highlights + backspace
 			input.addEventListener("keydown", (e) => {
 				if (e.key === "Escape") { resetTest(); return; }
 				if (finished) return;
@@ -319,19 +320,47 @@ const defaultKeyboardHTML = renderKeyboardHTML("qwerty");
 					if (typed.length > 0) { typed = typed.slice(0, -1); onTypedChange(); }
 					return;
 				}
-				if (e.key.length === 1) {
-					e.preventDefault();
-					const willBeCorrect = e.key === target[typed.length];
-					typed += e.key;
-					onTypedChange();
-					if (e.code) flashKey(e.code, willBeCorrect);
-				}
 			});
 
 			input.addEventListener("keyup", (e) => {
 				const keyEl = keyEls.get(e.code);
 				if (keyEl) keyEl.classList.remove("key-pressed");
 			});
+
+			// Mobile + Desktop: input event catches all text changes
+			let lastInputValue = "";
+			input.addEventListener("input", (e) => {
+				if (finished) { input.value = ""; return; }
+				const val = input.value;
+				if (val.length > lastInputValue.length) {
+					// Characters were added
+					const added = val.slice(lastInputValue.length);
+					for (const ch of added) {
+						if (ch.length === 1) {
+							const willBeCorrect = ch === target[typed.length];
+							typed += ch;
+							onTypedChange();
+							const code = codeForCharGlobal(ch);
+							if (code) flashKey(code, willBeCorrect);
+						}
+					}
+				} else if (val.length < lastInputValue.length) {
+					// Backspace or delete
+					const diff = lastInputValue.length - val.length;
+					typed = typed.slice(0, -diff);
+					onTypedChange();
+				}
+				lastInputValue = val;
+				// Clear input to allow re-typing same characters
+				input.value = "";
+				lastInputValue = "";
+			});
+
+			// Helper: find event.code from character using current layout
+			function codeForCharGlobal(ch) {
+				const map = { a:"KeyA",b:"KeyB",c:"KeyC",d:"KeyD",e:"KeyE",f:"KeyF",g:"KeyG",h:"KeyH",i:"KeyI",j:"KeyJ",k:"KeyK",l:"KeyL",m:"KeyM",n:"KeyN",o:"KeyO",p:"KeyP",q:"KeyQ",r:"KeyR",s:"KeyS",t:"KeyT",u:"KeyU",v:"KeyV",w:"KeyW",x:"KeyX",y:"KeyY",z:"KeyZ"," ":"Space" };
+				return map[ch.toLowerCase()] ?? null;
+			}
 
 			restartBtn.addEventListener("click", resetTest);
 
