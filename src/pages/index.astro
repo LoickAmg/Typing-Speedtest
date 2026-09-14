@@ -70,9 +70,10 @@ const defaultKeyboardHTML = renderKeyboardHTML("qwerty");
 			</div>
 
 			<!-- Text -->
-			<div id="text-display" class="text-display" tabindex="0" role="button" aria-label="Text zone. Click then type to start."></div>
-
-			<input id="typing-input" class="sr-input" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Typing input" />
+			<div class="text-input-wrap">
+				<div id="text-display" class="text-display" tabindex="0" role="button" aria-label="Text zone. Click then type to start."></div>
+				<input id="typing-input" class="sr-input" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Typing input" />
+			</div>
 
 			<!-- Stats -->
 			<div class="stats-bar" aria-live="polite" aria-atomic="true">
@@ -570,6 +571,10 @@ const defaultKeyboardHTML = renderKeyboardHTML("qwerty");
 
 			.hidden { display: none; }
 
+			.text-input-wrap {
+				position: relative;
+			}
+
 			/* ─── Controls ───────────────────────────────────────── */
 
 			.controls {
@@ -635,6 +640,7 @@ const defaultKeyboardHTML = renderKeyboardHTML("qwerty");
 				min-height: 5rem;
 				max-width: 100%;
 				overflow-wrap: anywhere;
+				position: relative;
 			}
 
 			[data-theme="light"] .text-display { border: 1px solid rgba(0, 0, 0, 0.06); }
@@ -664,13 +670,14 @@ const defaultKeyboardHTML = renderKeyboardHTML("qwerty");
 
 			.sr-input {
 				position: absolute;
-				left: -9999px;
 				top: 0;
-				width: 1px;
-				height: 1px;
+				left: 0;
+				width: 100%;
+				height: 100%;
 				opacity: 0;
-				pointer-events: none;
 				font-size: 16px;
+				cursor: text;
+				z-index: 1;
 			}
 
 			/* ─── Stats ──────────────────────────────────────────── */
